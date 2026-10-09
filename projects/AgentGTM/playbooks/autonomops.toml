@@ -1,0 +1,52 @@
+[startup]
+id = "autonomops"
+name = "Autonomops"
+website = "https://autonomops.ai"
+one_liner = "Agentic SRE: AI agents that investigate and resolve production incidents, as a product or a custom solution"
+confirmed = false
+founder_name = "TBD"
+founder_channel = "file"
+founder_contact = ""
+daily_invites = 15
+preferred_industries = ["Software Development", "Technology, Information and Internet", "Financial Services", "Retail", "IT Services and IT Consulting"]
+exclude_companies = []
+
+[territory_weights]
+bay_area = 3
+pnw_socal = 2
+northeast = 2
+south = 1.5
+midwest = 1
+mountain = 1
+mid_atlantic = 0.5
+
+[[personas]]
+id = "infra_leader"
+label = "VP / Head of Infrastructure or Platform"
+role = "buyer"
+priority = 3
+title_keywords = ["vp infrastructure", "vp of infrastructure", "head of infrastructure", "director of infrastructure", "vp platform", "head of platform", "director of platform", "head of devops", "director of devops", "head of cloud", "vp cloud", "vp engineering operations"]
+exclude_title_keywords = ["intern", "interns", "sales", "recruit*", "account executive"]
+company_sizes = ["201-500", "501-1000", "1001-5000", "5001-10000", "10001+"]
+search_titles = ["VP Infrastructure", "Head of Platform Engineering", "Director of DevOps", "Head of Cloud"]
+
+[[personas]]
+id = "sre_leader"
+label = "SRE Leader (manager / staff / principal)"
+role = "champion"
+priority = 3
+title_keywords = ["sre", "site reliability", "reliability engineering", "production engineering"]
+require_title_keywords = ["head", "director", "manager", "lead", "principal", "staff", "vp"]
+exclude_title_keywords = ["intern", "interns", "recruit*", "sales"]
+company_sizes = ["201-500", "501-1000", "1001-5000", "5001-10000", "10001+"]
+search_titles = ["SRE Manager", "Head of SRE", "Director of Site Reliability", "Staff SRE"]
+
+[[personas]]
+id = "midsize_cto"
+label = "CTO at mid-size tech company"
+role = "buyer"
+priority = 2
+title_keywords = ["cto", "chief technology officer"]
+exclude_title_keywords = ["intern", "interns", "assistant", "office of the cto"]
+company_sizes = ["51-200", "201-500", "501-1000"]
+search_titles = ["CTO", "Chief Technology Officer"]

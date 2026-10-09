@@ -1,0 +1,80 @@
+# Daily runs of projects/AgentGTM/workflows/bde-prospecting.
+# Off until the repository variable AGENTGTM_BDE_ENABLED is "true".
+#
+# Secrets: AGENTGTM_SHEET_ID, GOOGLE_SERVICE_ACCOUNT_JSON (the key file's contents),
+# ANTHROPIC_API_KEY (optional), plus SMTP_* or Slack webhook secrets for the channels you use.
+# Set AGENTGTM_SEND to "true" (repository variable) once dry-run messages look right.
+
+name: agentgtm-bde-prospecting
+
+on:
+  schedule:
+    - cron: "0 4 * * 1-6"     # 09:30 IST Mon-Sat: plan
+    - cron: "30 14 * * 1-6"   # 20:00 IST Mon-Sat: check + founder batch
+    - cron: "30 3 * * 1"      # 09:00 IST Monday: weekly report
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Command to run"
+        required: true
+        type: choice
+        options: [plan, evening, weekly-report]
+
+concurrency:
+  group: agentgtm-bde-prospecting
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: vars.AGENTGTM_BDE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/AgentGTM/workflows/bde-prospecting
+    env:
+      GOOGLE_SERVICE_ACCOUNT_FILE: /tmp/sa.json
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM: ${{ secrets.SMTP_FROM }}
+      STORE: sheets:${{ secrets.AGENTGTM_SHEET_ID }}
+      SEND: ${{ vars.AGENTGTM_SEND == 'true' && '--send' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: Write service account key
+        env:
+          SA_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: printf '%s' "$SA_JSON" > "$GOOGLE_SERVICE_ACCOUNT_FILE"
+      - name: Pick command
+        id: pick
+        run: |
+          case "${{ github.event.schedule || inputs.command }}" in
+            "0 4 * * 1-6"|plan) echo "cmd=plan" >> "$GITHUB_OUTPUT" ;;
+            "30 14 * * 1-6"|evening) echo "cmd=evening" >> "$GITHUB_OUTPUT" ;;
+            *) echo "cmd=weekly-report" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - name: Plan
+        if: steps.pick.outputs.cmd == 'plan'
+        run: python -m bde_prospecting plan --store "$STORE" $SEND --sheet-url "https://docs.google.com/spreadsheets/d/${{ secrets.AGENTGTM_SHEET_ID }}"
+      - name: Check and founder batch
+        if: steps.pick.outputs.cmd == 'evening'
+        run: |
+          python -m bde_prospecting check --store "$STORE" $SEND
+          python -m bde_prospecting founder-batch --store "$STORE" $SEND
+      - name: Weekly report
+        if: steps.pick.outputs.cmd == 'weekly-report'
+        run: python -m bde_prospecting weekly-report --store "$STORE" $SEND
+      - name: Keep the outbox
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: outbox-${{ github.run_id }}
+          path: projects/AgentGTM/workflows/bde-prospecting/outbox/
+          retention-days: 90
+          if-no-files-found: ignore

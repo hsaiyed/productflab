@@ -13,4 +13,4 @@ depends_on = []
 
 # Files under contracts/ that other projects may rely on, e.g. "lead.v1.schema.json".
 # Treat each one as a public API: never make a breaking change in place; add a .v2 file.
-exposes = []
+exposes = ["prospect.v1.schema.json"]

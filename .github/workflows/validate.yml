@@ -13,3 +13,17 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 scripts/validate.py
+
+  agentgtm-bde-prospecting:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/AgentGTM/workflows/bde-prospecting
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e '.[dev]'
+      - run: pytest -q
+      - run: python tests/evals/eval_persona.py

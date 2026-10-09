@@ -1,0 +1,43 @@
+# US sales territories. States use 2-letter codes.
+
+[[territories]]
+id = "bay_area"
+label = "West: Bay Area"
+states = ["CA"]
+metros = ["San Francisco Bay Area", "San Jose", "Palo Alto", "Oakland"]
+
+[[territories]]
+id = "pnw_socal"
+label = "West: Pacific NW & SoCal"
+states = ["WA", "OR", "CA"]
+metros = ["Seattle", "Portland", "Los Angeles", "San Diego", "Irvine"]
+
+[[territories]]
+id = "northeast"
+label = "Northeast"
+states = ["NY", "NJ", "MA", "CT", "PA", "RI", "NH", "VT", "ME"]
+metros = ["New York City", "Boston", "Philadelphia", "Jersey City"]
+
+[[territories]]
+id = "mid_atlantic"
+label = "Mid-Atlantic"
+states = ["DC", "VA", "MD", "DE"]
+metros = ["Washington DC", "Arlington", "Reston", "Baltimore"]
+
+[[territories]]
+id = "south"
+label = "South"
+states = ["TX", "GA", "FL", "NC", "SC", "TN", "AL", "LA", "KY", "AR", "MS", "OK"]
+metros = ["Austin", "Dallas", "Houston", "Atlanta", "Miami", "Raleigh", "Nashville"]
+
+[[territories]]
+id = "midwest"
+label = "Midwest"
+states = ["IL", "MN", "MI", "OH", "WI", "IN", "MO", "IA", "KS", "NE", "ND", "SD"]
+metros = ["Chicago", "Minneapolis", "Detroit", "Columbus", "St. Louis"]
+
+[[territories]]
+id = "mountain"
+label = "Mountain"
+states = ["CO", "UT", "AZ", "NV", "ID", "MT", "NM", "WY"]
+metros = ["Denver", "Boulder", "Salt Lake City", "Phoenix", "Las Vegas"]

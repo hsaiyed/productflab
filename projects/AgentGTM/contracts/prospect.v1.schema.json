@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agentgtm/prospect.v1.schema.json",
+  "title": "Prospect (v1)",
+  "description": "A person researched by a BDE, with the agent's check result and the founder's outreach status. One row of the Prospects tab.",
+  "type": "object",
+  "properties": {
+    "date_added": {
+      "type": "string",
+      "description": "Date the BDE added the row (YYYY-MM-DD).",
+      "format": "date"
+    },
+    "bde_id": {
+      "type": "string",
+      "description": "BDE who researched the person."
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Daily task the row belongs to."
+    },
+    "startup": {
+      "type": "string",
+      "description": "Playbook id, e.g. daxa."
+    },
+    "territory": {
+      "type": "string",
+      "description": "Territory id, e.g. northeast."
+    },
+    "persona": {
+      "type": "string",
+      "description": "Persona id from the startup's playbook."
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "Current job title exactly as shown on LinkedIn."
+    },
+    "company": {
+      "type": "string"
+    },
+    "company_domain": {
+      "type": "string",
+      "description": "Company website domain."
+    },
+    "company_size": {
+      "type": "string",
+      "enum": [
+        "1-10",
+        "11-50",
+        "51-200",
+        "201-500",
+        "501-1000",
+        "1001-5000",
+        "5001-10000",
+        "10001+"
+      ]
+    },
+    "industry": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "description": "US state, 2-letter code or full name."
+    },
+    "linkedin_url": {
+      "type": "string",
+      "description": "Public profile URL (linkedin.com/in/...). Unique key."
+    },
+    "signal_notes": {
+      "type": "string",
+      "description": "Recent, relevant activity noticed by the BDE."
+    },
+    "check_status": {
+      "type": "string",
+      "enum": [
+        "",
+        "valid",
+        "rejected",
+        "needs_review"
+      ],
+      "description": "Empty until the nightly check runs."
+    },
+    "check_reasons": {
+      "type": "string",
+      "description": "Why the row was rejected or needs review."
+    },
+    "score": {
+      "type": "string",
+      "description": "0-100 priority for the founder's invite queue."
+    },
+    "founder_note": {
+      "type": "string",
+      "description": "Connection note drafted for the founder."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "",
+        "new",
+        "queued",
+        "invited",
+        "accepted",
+        "replied",
+        "meeting",
+        "not_a_fit",
+        "do_not_contact"
+      ],
+      "description": "Pipeline stage. Founders move it on from queued."
+    },
+    "status_updated": {
+      "type": "string",
+      "description": "Date status last changed (YYYY-MM-DD).",
+      "format": "date"
+    }
+  },
+  "required": [
+    "bde_id",
+    "startup",
+    "territory",
+    "persona",
+    "first_name",
+    "last_name",
+    "title",
+    "company",
+    "company_size",
+    "state",
+    "linkedin_url"
+  ],
+  "additionalProperties": false
+}

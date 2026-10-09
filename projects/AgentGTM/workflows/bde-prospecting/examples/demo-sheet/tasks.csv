@@ -1,0 +1,5 @@
+date,task_id,bde_id,startup,persona,territory,target,mode
+2026-10-12,T-2026-10-12-BDE-01,BDE-01,daxa,ciso,northeast,35,sales_navigator
+2026-10-12,T-2026-10-12-BDE-02,BDE-02,autonomops,sre_leader,bay_area,25,google_xray
+2026-10-12,T-2026-10-12-BDE-03,BDE-03,fastn,saas_cto,bay_area,25,google_xray
+2026-10-12,T-2026-10-12-BDE-04,BDE-04,architecto,solutions_architect,south,25,google_xray

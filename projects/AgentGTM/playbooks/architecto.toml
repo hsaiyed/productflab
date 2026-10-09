@@ -1,0 +1,51 @@
+[startup]
+id = "architecto"
+name = "Architecto"
+website = "https://architecto.dev"
+one_liner = "Create and edit software architecture diagrams from a prompt"
+confirmed = false
+founder_name = "TBD"
+founder_channel = "file"
+founder_contact = ""
+daily_invites = 15
+preferred_industries = ["IT Services and IT Consulting", "Software Development", "Technology, Information and Internet"]
+exclude_companies = []
+
+[territory_weights]
+bay_area = 2
+northeast = 2
+south = 2
+midwest = 1.5
+mid_atlantic = 1.5
+pnw_socal = 1.5
+mountain = 1
+
+[[personas]]
+id = "enterprise_architect"
+label = "Chief / Enterprise / Principal Architect"
+role = "buyer"
+priority = 3
+title_keywords = ["chief architect", "enterprise architect", "head of architecture", "director of architecture", "principal architect", "vp architecture", "software architect"]
+exclude_title_keywords = ["intern", "interns", "landscape", "interior", "building", "recruit*", "sales"]
+company_sizes = []
+search_titles = ["Chief Architect", "Enterprise Architect", "Principal Architect", "Head of Architecture"]
+
+[[personas]]
+id = "solutions_architect"
+label = "Solutions / Cloud Architect or Sales Engineer"
+role = "champion"
+priority = 3
+title_keywords = ["solutions architect", "solution architect", "cloud architect", "sales engineer", "solutions engineer", "presales", "pre-sales"]
+exclude_title_keywords = ["intern", "interns", "recruit*", "landscape", "interior", "building"]
+company_sizes = []
+search_titles = ["Solutions Architect", "Cloud Architect", "Sales Engineer", "Solutions Engineer"]
+
+[[personas]]
+id = "eng_leader"
+label = "VP / Director of Engineering"
+role = "buyer"
+priority = 2
+title_keywords = ["vp engineering", "vp of engineering", "head of engineering", "director of engineering", "cto", "chief technology officer"]
+exclude_title_keywords = ["intern", "interns", "sales", "recruit*", "assistant"]
+company_sizes = ["51-200", "201-500", "501-1000", "1001-5000"]
+search_titles = ["VP Engineering", "Director of Engineering", "CTO"]

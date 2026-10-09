@@ -1,0 +1,51 @@
+[startup]
+id = "daxa"
+name = "Daxa"
+website = "https://daxa.ai"
+one_liner = "Data security and governance for enterprise GenAI and AI agents"
+confirmed = false
+founder_name = "TBD"
+founder_channel = "file"          # file | slack | email
+founder_contact = ""              # Slack webhook env var name, or email address
+daily_invites = 15
+preferred_industries = ["Financial Services", "Banking", "Insurance", "Hospitals and Health Care", "Pharmaceutical Manufacturing", "Software Development"]
+exclude_companies = []            # customers, competitors: ["acme.com", "Competitor Inc"]
+
+[territory_weights]
+northeast = 3
+mid_atlantic = 2
+bay_area = 2
+south = 1
+midwest = 1
+pnw_socal = 1
+mountain = 0.5
+
+[[personas]]
+id = "ciso"
+label = "CISO / Head of Security"
+role = "buyer"
+priority = 3
+title_keywords = ["ciso", "chief information security", "chief security officer", "vp information security", "vp of information security", "vp, information security", "vp security", "vp of security", "head of security", "head of information security", "director of information security"]
+exclude_title_keywords = ["analyst", "assistant", "intern", "interns", "sales", "recruit*", "account executive", "consultant"]
+company_sizes = ["501-1000", "1001-5000", "5001-10000", "10001+"]
+search_titles = ["CISO", "Chief Information Security Officer", "VP Information Security", "Head of Security"]
+
+[[personas]]
+id = "ai_platform"
+label = "Head of AI / ML Platform"
+role = "champion"
+priority = 2
+title_keywords = ["head of ai", "vp ai", "vp of ai", "director of ai", "chief ai officer", "ai platform", "ml platform", "head of machine learning", "vp machine learning", "director of machine learning", "head of genai", "genai lead"]
+exclude_title_keywords = ["intern", "interns", "sales", "recruit*", "student"]
+company_sizes = ["201-500", "501-1000", "1001-5000", "5001-10000", "10001+"]
+search_titles = ["Head of AI", "VP AI", "Director of Machine Learning", "AI Platform"]
+
+[[personas]]
+id = "data_governance"
+label = "Data Governance / Privacy Leader"
+role = "buyer"
+priority = 2
+title_keywords = ["data governance", "chief data officer", "chief privacy officer", "head of privacy", "vp data governance", "director of data governance", "head of data protection"]
+exclude_title_keywords = ["analyst", "intern", "interns", "sales", "recruit*"]
+company_sizes = ["501-1000", "1001-5000", "5001-10000", "10001+"]
+search_titles = ["Chief Data Officer", "Head of Data Governance", "Chief Privacy Officer"]

@@ -1,0 +1,27 @@
+[project]
+name = "agentgtm-bde-prospecting"
+version = "0.1.0"
+description = "Daily BDE prospecting tasks, row checks and founder invite batches for AgentGTM"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1,<2",
+    "gspread>=6,<7",
+]
+
+[project.optional-dependencies]
+tracing = [
+    "arize-phoenix-otel",
+    "openinference-instrumentation-anthropic",
+]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

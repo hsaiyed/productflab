@@ -1,0 +1,46 @@
+# BDE roster. Startup ids match playbooks/<id>.toml.
+# linkedin_plan: "sales_navigator" or "free". Free accounts get Google search tasks
+# so they don't hit LinkedIn's monthly search limit.
+# channel: file | slack | email. contact: env var holding the Slack webhook, or an email address.
+
+# You: receives the weekly report and rows that need a human decision.
+[owner]
+name = "Owner"
+channel = "file"
+contact = ""
+
+[[bdes]]
+id = "BDE-01"
+name = "TBD"
+linkedin_plan = "sales_navigator"
+startups = ["daxa"]
+daily_target = 35
+channel = "file"
+contact = ""
+
+[[bdes]]
+id = "BDE-02"
+name = "TBD"
+linkedin_plan = "free"
+startups = ["autonomops"]
+daily_target = 25
+channel = "file"
+contact = ""
+
+[[bdes]]
+id = "BDE-03"
+name = "TBD"
+linkedin_plan = "free"
+startups = ["fastn"]
+daily_target = 25
+channel = "file"
+contact = ""
+
+[[bdes]]
+id = "BDE-04"
+name = "TBD"
+linkedin_plan = "free"
+startups = ["architecto"]
+daily_target = 25
+channel = "file"
+contact = ""

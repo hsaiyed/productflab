@@ -6,12 +6,14 @@ AI agentic workflows for go-to-market work.
 
 | Workflow | What it does |
 | --- | --- |
-| _none yet_ | |
+| [bde-prospecting](workflows/bde-prospecting/) | Daily LinkedIn research tasks for BDEs, nightly checks, and ranked invite lists with drafted notes for founders |
+
+Startup playbooks shared by all workflows are in [playbooks/](playbooks/).
 
 ## Interfaces
 
 - **Depends on:** none
-- **Exposes:** none
+- **Exposes:** `contracts/prospect.v1.schema.json`, one researched prospect with check result and outreach status
 
 See `project.toml` for the authoritative list.
 
@@ -19,7 +21,11 @@ See `project.toml` for the authoritative list.
 
 | Variable | Used by | Purpose |
 | --- | --- | --- |
-| _none yet_ | | |
+| `GOOGLE_SERVICE_ACCOUNT_FILE` | bde-prospecting | Google Sheets access |
+| `ANTHROPIC_API_KEY` | bde-prospecting (optional) | Claude for unclear titles and connection notes |
+| `AGENTGTM_MODEL` | bde-prospecting (optional) | Claude model id |
+| `PHOENIX_COLLECTOR_ENDPOINT` | bde-prospecting (optional) | Arize Phoenix tracing |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | bde-prospecting (email channel) | Outgoing mail |
 
 ## Layout
 
@@ -30,5 +36,6 @@ See `project.toml` for the authoritative list.
 | `prompts/` | Prompt templates used by this project |
 | `tools/` | Tools and integrations this project's agents call |
 | `contracts/` | Public schemas other projects may rely on (list them in `exposes`) |
+| `playbooks/` | One file per startup: personas, territories, exclusions |
 | `docs/` | Design notes for this project |
 | `tests/` | Tests and evals |

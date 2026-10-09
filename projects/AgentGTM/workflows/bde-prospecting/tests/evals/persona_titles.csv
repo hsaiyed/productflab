@@ -1,0 +1,51 @@
+startup,persona,title,expected
+daxa,ciso,Chief Information Security Officer,fit
+daxa,ciso,CISO,fit
+daxa,ciso,"VP, Information Security",fit
+daxa,ciso,Head of Security & Compliance,fit
+daxa,ciso,Deputy CISO,fit
+daxa,ciso,Security Analyst,no_fit
+daxa,ciso,Cybersecurity Sales Account Executive,no_fit
+daxa,ciso,Executive Assistant to the CISO,no_fit
+daxa,ciso,Director of Information Security,fit
+daxa,ciso,Information Security Consultant,no_fit
+daxa,ai_platform,Head of AI,fit
+daxa,ai_platform,Director of Machine Learning,fit
+daxa,ai_platform,AI Platform Engineering Manager,fit
+daxa,ai_platform,Machine Learning Intern,no_fit
+daxa,ai_platform,Chief AI Officer,fit
+daxa,data_governance,Chief Data Officer,fit
+daxa,data_governance,Data Governance Analyst,no_fit
+daxa,data_governance,Head of Privacy,fit
+fastn,saas_cto,Co-founder & CTO,fit
+fastn,saas_cto,VP of Engineering,fit
+fastn,saas_cto,Director of Sales Engineering,no_fit
+fastn,saas_cto,Technical Recruiter,no_fit
+fastn,product_head,Head of Product,fit
+fastn,product_head,Product Marketing Manager,no_fit
+fastn,product_head,Product Designer,no_fit
+fastn,integrations_lead,Head of Integrations,fit
+fastn,integrations_lead,Technology Partnerships Lead,fit
+fastn,integrations_lead,Channel Sales Manager,no_fit
+autonomops,infra_leader,VP Infrastructure,fit
+autonomops,infra_leader,Head of Platform Engineering,fit
+autonomops,infra_leader,Director of DevOps,fit
+autonomops,infra_leader,Infrastructure Sales Account Executive,no_fit
+autonomops,sre_leader,SRE Manager,fit
+autonomops,sre_leader,Head of Site Reliability Engineering,fit
+autonomops,sre_leader,Staff Site Reliability Engineer,fit
+autonomops,sre_leader,Site Reliability Engineer,no_fit
+autonomops,sre_leader,SRE Intern,no_fit
+autonomops,midsize_cto,CTO,fit
+autonomops,midsize_cto,Office of the CTO Program Manager,no_fit
+architecto,enterprise_architect,Enterprise Architect,fit
+architecto,enterprise_architect,Chief Architect,fit
+architecto,enterprise_architect,Landscape Architect,no_fit
+architecto,enterprise_architect,Interior Architect,no_fit
+architecto,solutions_architect,Senior Solutions Architect,fit
+architecto,solutions_architect,AWS Cloud Architect,fit
+architecto,solutions_architect,Pre-Sales Solutions Engineer,fit
+architecto,solutions_architect,Building Architect,no_fit
+architecto,eng_leader,Director of Engineering,fit
+architecto,eng_leader,Engineering Recruiter,no_fit
+daxa,ciso,"Head of Security, International",fit

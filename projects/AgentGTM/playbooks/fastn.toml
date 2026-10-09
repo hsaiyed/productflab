@@ -1,0 +1,51 @@
+[startup]
+id = "fastn"
+name = "fastn"
+website = "https://fastn.ai"
+one_liner = "Integration platform that lets SaaS products and AI agents connect to other apps without building each integration"
+confirmed = false
+founder_name = "TBD"
+founder_channel = "file"
+founder_contact = ""
+daily_invites = 15
+preferred_industries = ["Software Development", "IT Services and IT Consulting", "Technology, Information and Internet"]
+exclude_companies = []
+
+[territory_weights]
+bay_area = 3
+northeast = 1.5
+south = 1.5
+mountain = 1
+pnw_socal = 1
+midwest = 0.5
+mid_atlantic = 0.5
+
+[[personas]]
+id = "saas_cto"
+label = "CTO / VP Engineering at B2B SaaS"
+role = "buyer"
+priority = 3
+title_keywords = ["cto", "chief technology officer", "vp engineering", "vp of engineering", "vp, engineering", "svp engineering", "head of engineering"]
+exclude_title_keywords = ["intern", "interns", "sales", "recruit*", "assistant"]
+company_sizes = ["11-50", "51-200", "201-500"]
+search_titles = ["CTO", "VP Engineering", "Head of Engineering"]
+
+[[personas]]
+id = "product_head"
+label = "Head of Product"
+role = "champion"
+priority = 2
+title_keywords = ["head of product", "vp product", "vp of product", "chief product officer", "director of product"]
+exclude_title_keywords = ["intern", "interns", "marketing", "sales", "recruit*", "designer"]
+company_sizes = ["11-50", "51-200", "201-500"]
+search_titles = ["Head of Product", "VP Product", "Chief Product Officer"]
+
+[[personas]]
+id = "integrations_lead"
+label = "Integrations / Partnerships Lead"
+role = "champion"
+priority = 2
+title_keywords = ["integration", "integrations", "partner engineering", "head of partnerships", "vp partnerships", "ecosystem", "technology partnerships"]
+exclude_title_keywords = ["intern", "interns", "recruit*", "channel sales", "account executive"]
+company_sizes = ["51-200", "201-500", "501-1000"]
+search_titles = ["Head of Integrations", "Integrations Lead", "Head of Partnerships", "Ecosystem"]
