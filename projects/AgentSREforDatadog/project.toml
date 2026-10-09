@@ -1,0 +1,16 @@
+# Project manifest. scripts/validate.py checks this file.
+
+[project]
+name = "AgentSREforDatadog"                 # must match the folder name under projects/
+description = "AI SRE agents that investigate and respond to Datadog alerts and incidents."
+owner = "hsaiyed"
+status = "experimental"           # experimental | active | deprecated
+
+[interfaces]
+# Other projects whose contracts this project uses. It may reference
+# projects/<Name>/contracts/ only for projects listed here, and nothing else in them.
+depends_on = []
+
+# Files under contracts/ that other projects may rely on, e.g. "lead.v1.schema.json".
+# Treat each one as a public API: never make a breaking change in place; add a .v2 file.
+exposes = []

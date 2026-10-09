@@ -8,6 +8,7 @@ A monorepo of AI agentic workflow projects. Each project is self-contained under
 | Project | Status | Description | Depends on |
 | --- | --- | --- | --- |
 | [AgentGTM](projects/AgentGTM/) | active | AI agentic workflows for go-to-market work. | — |
+| [AgentSREforDatadog](projects/AgentSREforDatadog/) | experimental | AI SRE agents that investigate and respond to Datadog alerts and incidents. | — |
 <!-- projects:end -->
 
 This table is generated from each project's `project.toml`. Don't edit it by hand; run `python3 scripts/validate.py --fix`.
