@@ -71,6 +71,9 @@ class CsvStore:
     def read_do_not_contact(self):
         return self._read(sheet.DO_NOT_CONTACT)
 
+    def append_do_not_contact(self, entry):
+        self._write(sheet.DO_NOT_CONTACT, self._read(sheet.DO_NOT_CONTACT) + [entry])
+
     def read_agent_log(self):
         return self._read(sheet.AGENT_LOG)
 
@@ -135,6 +138,9 @@ class SheetsStore:
 
     def read_do_not_contact(self):
         return self._records(sheet.DO_NOT_CONTACT, sheet.DNC_COLUMNS)
+
+    def append_do_not_contact(self, entry):
+        self._ws(sheet.DO_NOT_CONTACT).append_rows([[str(entry.get(c, "")) for c in sheet.DNC_COLUMNS]], value_input_option="RAW")
 
     def read_agent_log(self):
         return self._records(sheet.AGENT_LOG, sheet.AGENT_LOG_COLUMNS)

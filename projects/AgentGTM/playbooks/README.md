@@ -14,4 +14,5 @@ Fields marked `confirmed = false` are first drafts: review them with the founder
 | `personas[].company_sizes` | Allowed LinkedIn company-size bands. Empty = any. |
 | `personas[].search_titles` | Titles BDEs paste into LinkedIn / Google searches. |
 | `territory_weights` | How much to search each territory (0 = never). Territory ids are in `workflows/bde-prospecting/config/territories.toml`. |
+| `founder_emails` | Google accounts allowed to sign in to this startup's founder page. |
 | `exclude_companies` | Current customers, competitors, partners. Domains or names. |

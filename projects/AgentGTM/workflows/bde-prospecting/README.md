@@ -53,8 +53,8 @@ The agent can't touch LinkedIn, contact prospects, or change playbooks, the rost
 
 ```sh
 cd projects/AgentGTM/workflows/bde-prospecting
-pip install -e '.[dev,mcp]'
-pytest                                        # 45 tests, incl. the agent loop with a scripted model
+pip install -e '.[dev,mcp,app]'
+pytest                                        # 53 tests, incl. the agent loop and the web app
 python tests/evals/eval_persona.py            # title-matching eval (free)
 
 export ANTHROPIC_API_KEY=...
@@ -64,6 +64,21 @@ python tests/evals/eval_agent.py              # live agent eval on a copy of the
 ```
 
 Without an API key, `python -m bde_prospecting demo --no-llm` runs the fixed-rule fallback.
+
+## Web app (Google sign-in)
+
+Founders and you sign in with Google. Access is by email: yours in `config/bdes.toml` `[owner] emails`, each founder's in their playbook's `founder_emails`.
+
+| Founder page | Owner dashboard |
+| --- | --- |
+| ![Founder page](docs/screenshots/founder-daxa.png) | ![Owner dashboard](docs/screenshots/owner-pipeline.png) |
+
+- **Founders** see only their startup: today's invites with the note (copy button), the LinkedIn link, and buttons to record *Sent invite → Accepted → Replied → Meeting booked*, *Not a fit* or *Don't contact*. Those clicks are what the agent learns from.
+- **You** see the pipeline per startup and persona/territory/BDE, BDE quality, the review queue (approve or reject), the agent's run summaries, journal and proposed changes, every founder page, and an *Ask the agent* box.
+- Every action is re-checked on the server against the signed-in email (`src/bde_prospecting/access.py`).
+
+Try it locally without any Google setup: `pip install -e '.[app]' && python app/demo.py owner` (or `daxa`, `stranger`).
+Set up Google sign-in and deploy to Cloud Run: [docs/deploy-web-app.md](docs/deploy-web-app.md).
 
 ## Use it from Claude Desktop or Cowork (MCP)
 

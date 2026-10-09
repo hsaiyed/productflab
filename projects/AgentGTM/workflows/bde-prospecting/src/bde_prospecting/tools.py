@@ -452,6 +452,8 @@ class Toolbox:
         changes = "\n".join(f"- [ ] {c}" for c in proposed_changes) or "- None this week."
         body = f"## Agent's analysis\n\n{analysis.strip()}\n\n## Proposed changes (for you to approve)\n\n{changes}\n\n{tables}"
         result = self._deliver("weekly-report", "Weekly BDE prospecting report", body, self.cfg.owner.channel, self.cfg.owner.contact)
+        if proposed_changes:
+            self.store.append_agent_log({"date": self.day, "mode": "weekly-proposals", "note": "\n".join(proposed_changes)[:2000]})
         self._record("weekly_report", proposed_changes=len(proposed_changes))
         return _json({"ok": True, "delivery": result})
 

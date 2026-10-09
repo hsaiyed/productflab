@@ -5,6 +5,7 @@ website = "https://architecto.dev"
 one_liner = "Create and edit software architecture diagrams from a prompt"
 confirmed = false
 founder_name = "TBD"
+founder_emails = []              # Google accounts that can sign in to this startup's page
 founder_channel = "file"
 founder_contact = ""
 daily_invites = 15

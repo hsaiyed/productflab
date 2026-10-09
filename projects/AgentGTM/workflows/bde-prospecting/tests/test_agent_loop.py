@@ -89,7 +89,9 @@ def test_agent_loop_with_scripted_model(tmp_path, cfg, monkeypatch):
     assert rows[RILEY]["check_status"] == sheet.REJECTED
     assert rows[JAMIE]["check_status"] == sheet.NEEDS_REVIEW
     assert rows[6]["status"] == sheet.QUEUED and "GenAI" in rows[6]["founder_note"]
-    assert store.read_agent_log()[-1]["note"].startswith("Queued 1 Daxa invite")
+    log = {e["mode"]: e["note"] for e in store.read_agent_log()}
+    assert log["evening"].startswith("Queued 1 Daxa invite")
+    assert log["evening-summary"] == "Done. One escalation for you."
 
     # Audit trail, owner message and transcript.
     kinds = [a["action"] for a in result["actions"]]

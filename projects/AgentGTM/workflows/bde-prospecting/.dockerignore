@@ -1,0 +1,6 @@
+outbox/
+**/__pycache__/
+*.egg-info/
+tests/
+examples/
+.streamlit/secrets.toml

@@ -5,6 +5,7 @@ website = "https://fastn.ai"
 one_liner = "Integration platform that lets SaaS products and AI agents connect to other apps without building each integration"
 confirmed = false
 founder_name = "TBD"
+founder_emails = []              # Google accounts that can sign in to this startup's page
 founder_channel = "file"
 founder_contact = ""
 daily_invites = 15

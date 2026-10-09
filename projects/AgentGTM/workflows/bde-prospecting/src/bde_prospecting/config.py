@@ -1,5 +1,6 @@
 """Load and check playbooks, territories and the BDE roster."""
 
+import os
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -38,6 +39,7 @@ class Playbook:
     one_liner: str
     confirmed: bool
     founder_name: str
+    founder_emails: tuple[str, ...]
     founder_channel: str
     founder_contact: str
     daily_invites: int
@@ -72,6 +74,7 @@ class Owner:
     name: str = "Owner"
     channel: str = "file"
     contact: str = ""
+    emails: tuple[str, ...] = ()
 
 
 @dataclass
@@ -120,6 +123,7 @@ def load_playbook(path):
             one_liner=s["one_liner"],
             confirmed=bool(s.get("confirmed", False)),
             founder_name=s.get("founder_name", ""),
+            founder_emails=_lower(s.get("founder_emails", [])),
             founder_channel=s.get("founder_channel", "file"),
             founder_contact=s.get("founder_contact", ""),
             daily_invites=int(s.get("daily_invites", 15)),
@@ -132,8 +136,10 @@ def load_playbook(path):
         raise ConfigError(f"{path}: missing required field {e}") from e
 
 
-def load_config(config_dir=DEFAULT_CONFIG_DIR, playbook_dir=DEFAULT_PLAYBOOK_DIR):
-    config_dir, playbook_dir = Path(config_dir), Path(playbook_dir)
+def load_config(config_dir=None, playbook_dir=None):
+    """Load config. AGENTGTM_CONFIG_DIR / AGENTGTM_PLAYBOOK_DIR override the default folders."""
+    config_dir = Path(config_dir or os.environ.get("AGENTGTM_CONFIG_DIR") or DEFAULT_CONFIG_DIR)
+    playbook_dir = Path(playbook_dir or os.environ.get("AGENTGTM_PLAYBOOK_DIR") or DEFAULT_PLAYBOOK_DIR)
     cfg = Config()
     for path in sorted(playbook_dir.glob("*.toml")):
         pb = load_playbook(path)
@@ -144,7 +150,7 @@ def load_config(config_dir=DEFAULT_CONFIG_DIR, playbook_dir=DEFAULT_PLAYBOOK_DIR
         cfg.territories[t["id"]] = Territory(t["id"], t["label"], tuple(s.upper() for s in t["states"]), tuple(t.get("metros", [])))
     roster = _load_toml(config_dir / "bdes.toml")
     o = roster.get("owner", {})
-    cfg.owner = Owner(o.get("name", "Owner"), o.get("channel", "file"), o.get("contact", ""))
+    cfg.owner = Owner(o.get("name", "Owner"), o.get("channel", "file"), o.get("contact", ""), _lower(o.get("emails", [])))
     for b in roster.get("bdes", []):
         cfg.bdes[b["id"]] = Bde(
             id=b["id"],

@@ -5,6 +5,7 @@ website = "https://daxa.ai"
 one_liner = "Data security and governance for enterprise GenAI and AI agents"
 confirmed = false
 founder_name = "TBD"
+founder_emails = []              # Google accounts that can sign in to this startup's page
 founder_channel = "file"          # file | slack | email
 founder_contact = ""              # Slack webhook env var name, or email address
 daily_invites = 15

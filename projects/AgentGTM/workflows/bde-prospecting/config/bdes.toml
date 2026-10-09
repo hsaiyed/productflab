@@ -8,6 +8,7 @@
 name = "Owner"
 channel = "file"
 contact = ""
+emails = []        # Google accounts that can sign in to the owner dashboard (all startups)
 
 [[bdes]]
 id = "BDE-01"

@@ -146,6 +146,9 @@ def run_agent(toolbox: Toolbox, question=None, client=None, max_iterations=MAX_I
             transcript.append({"role": "harness", "content": messages[-1]["content"]})
 
     escalation_delivery = toolbox.deliver_escalations()
+    if mode != "ask" and final_text:
+        # Shown on the owner dashboard's agent activity tab.
+        toolbox.store.append_agent_log({"date": toolbox.day, "mode": f"{mode}-summary", "note": final_text[:2000]})
     result = {
         "mode": mode, "date": toolbox.day, "summary": final_text, "stop_reason": stop_reason,
         "open_items": toolbox.open_items(), "actions": toolbox.actions, "escalations": toolbox.escalations,

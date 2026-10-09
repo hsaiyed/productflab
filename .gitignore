@@ -20,3 +20,7 @@ node_modules/
 # Logs and run output
 *.log
 runs/
+
+# Streamlit secrets (Google sign-in)
+.streamlit/secrets.toml
+secrets.toml
