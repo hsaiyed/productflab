@@ -1,23 +1,15 @@
 # productflab
 
-A home for AI agentic workflows: agent definitions, multi-step workflows, reusable prompts, and the tools they call.
+A home for AI agentic workflow projects. Each project lives in its own top-level folder.
 
-## Layout
+## Projects
 
-| Folder | What goes here |
+| Project | Description |
 | --- | --- |
-| `workflows/` | End-to-end agentic workflows, one folder per workflow |
-| `agents/` | Agent definitions: role, instructions, tools, model settings |
-| `prompts/` | Reusable prompt templates shared across agents and workflows |
-| `tools/` | Tools and integrations agents can call (scripts, MCP servers, API wrappers) |
-| `docs/` | Design notes, decisions, and how-tos |
+| [AgentGTM](AgentGTM/) | AI agentic workflows for go-to-market work |
 
-## Adding a workflow
+## Adding a project
 
-Create `workflows/<workflow-name>/` with:
+Create a top-level folder named after the project with its own `README.md` and the standard layout: `workflows/`, `agents/`, `prompts/`, `tools/`, `docs/`. See [AgentGTM](AgentGTM/) as an example.
 
-- `README.md` — goal, inputs, outputs, and the steps or agents involved
-- the workflow code or config
-- an `examples/` folder with sample inputs and expected outputs, if useful
-
-Keep secrets out of the repo; read API keys from environment variables and list the ones you need in the workflow's README.
+Never commit secrets; use environment variables.
