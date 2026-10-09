@@ -9,6 +9,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+mcp = ["mcp>=1.12,<2"]
 tracing = [
     "arize-phoenix-otel",
     "openinference-instrumentation-anthropic",

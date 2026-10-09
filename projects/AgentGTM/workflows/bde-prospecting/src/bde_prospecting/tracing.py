@@ -22,7 +22,7 @@ def setup():
     except ImportError:
         log.warning("PHOENIX_COLLECTOR_ENDPOINT is set but the tracing extra isn't installed: pip install -e '.[tracing]'")
         return
-    register(project_name=os.environ.get("PHOENIX_PROJECT_NAME", "agentgtm-bde-prospecting"), auto_instrument=True)
+    register(project_name=os.environ.get("PHOENIX_PROJECT_NAME", "agentgtm-bde-prospecting"), auto_instrument=True, batch=True)
     _tracer = trace.get_tracer("bde_prospecting")
 
 

@@ -7,6 +7,7 @@ which founders update after acting on an invite.
 PROSPECTS = "Prospects"
 TASKS = "Tasks"
 DO_NOT_CONTACT = "DoNotContact"
+AGENT_LOG = "AgentLog"
 
 BDE_COLUMNS = [
     "date_added", "bde_id", "task_id", "startup", "territory", "persona",
@@ -23,6 +24,8 @@ REQUIRED = [
 
 TASK_COLUMNS = ["date", "task_id", "bde_id", "startup", "persona", "territory", "target", "mode"]
 DNC_COLUMNS = ["linkedin_url", "company_domain", "company", "reason", "added_by", "date"]
+# The agent's notes to its future self: what it did, what it's watching, open questions.
+AGENT_LOG_COLUMNS = ["date", "mode", "note"]
 
 # check_status values
 PENDING, VALID, REJECTED, NEEDS_REVIEW = "", "valid", "rejected", "needs_review"

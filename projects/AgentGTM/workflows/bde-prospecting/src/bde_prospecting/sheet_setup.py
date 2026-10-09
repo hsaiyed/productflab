@@ -23,6 +23,7 @@ def setup_spreadsheet(book, cfg):
         sheet.PROSPECTS: sheet.PROSPECT_COLUMNS,
         sheet.TASKS: sheet.TASK_COLUMNS,
         sheet.DO_NOT_CONTACT: sheet.DNC_COLUMNS,
+        sheet.AGENT_LOG: sheet.AGENT_LOG_COLUMNS,
     }
     for title, columns in layouts.items():
         ws = existing.get(title) or book.add_worksheet(title=title, rows=2000, cols=len(columns))

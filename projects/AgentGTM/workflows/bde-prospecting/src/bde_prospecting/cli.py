@@ -1,10 +1,13 @@
 """Command line: python -m bde_prospecting <command> --store <csv:dir | sheets:id>
 
-Daily schedule (India Standard Time):
-  09:30  plan           tasks to each BDE, with yesterday's feedback
-  20:00  check          validate today's rows
-  20:15  founder-batch  invites + notes to each founder (ready for US morning)
-  Mon    weekly-report  to you
+The agent (needs ANTHROPIC_API_KEY):
+  agent morning   09:30 IST  assign each BDE's task, with coaching
+  agent evening   20:00 IST  check today's rows, queue founders' invites with notes
+  agent weekly    Monday     analyse performance, report and propose changes
+  agent ask --question "..."   answer your question from the data (read-only)
+
+Fixed-rule fallback (no Claude): plan, check, founder-batch, weekly-report.
+`run <mode>` uses the agent when Claude is configured and the fallback otherwise.
 
 Nothing is delivered unless --send is given; without it messages are only written to the outbox.
 """
@@ -17,7 +20,7 @@ import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
-from . import checker, founder, messages, notify, planner, sheet, tracing
+from . import checker, founder, llm, messages, notify, planner, sheet, tracing
 from .config import WORKFLOW_DIR, ConfigError, load_config
 from .store import open_store
 
@@ -68,13 +71,13 @@ def cmd_check(args, cfg, store):
 
 
 def cmd_founder_batch(args, cfg, store):
-    rows = store.read_prospects()
+    rows, dnc = store.read_prospects(), store.read_do_not_contact()
     updates = {}
     for pb in sorted(cfg.playbooks.values(), key=lambda p: p.id):
         if args.startup and pb.id != args.startup:
             continue
         with tracing.span("founder_batch", startup=pb.id):
-            picks = founder.pick_and_draft(cfg, pb, rows, use_llm=False if args.no_llm else None)
+            picks = founder.pick_and_draft(cfg, pb, rows, use_llm=False if args.no_llm else None, dnc_rows=dnc)
         if not picks:
             print(f"{pb.id}: no new valid prospects")
             continue
@@ -92,6 +95,37 @@ def cmd_weekly_report(args, cfg, store):
     start = end - timedelta(days=6)
     body = messages.weekly_report(cfg, store.read_prospects(), start.isoformat(), end.isoformat())
     print(notify.deliver(args.outbox, args.date.isoformat(), "weekly-report", "Weekly BDE prospecting report", body, cfg.owner.channel, cfg.owner.contact, args.send))
+
+
+def cmd_agent(args, cfg, store):
+    from .agent import run_agent
+    from .tools import Toolbox
+
+    if not llm.available():
+        sys.exit("error: the agent needs ANTHROPIC_API_KEY (and the anthropic package); use `run` to fall back to fixed rules")
+    if args.mode == "ask" and not args.question:
+        sys.exit('error: agent ask needs --question "..."')
+    toolbox = Toolbox(cfg, store, args.date, args.mode, send=args.send, outbox=args.outbox, sheet_url=args.sheet_url)
+    result = run_agent(toolbox, question=args.question)
+    print(result["summary"] or "(no summary)")
+    print(f"\n{len(result['actions'])} actions, {len(result['escalations'])} escalations, "
+          f"{result['usage']['turns']} turns, {result['usage']['input_tokens']} in / {result['usage']['output_tokens']} out tokens, {result['seconds']}s")
+    if result["open_items"]:
+        print("Still open: " + "; ".join(result["open_items"]))
+    print(f"Transcript: {args.outbox / result['date'] / ('agent-' + args.mode + '-transcript.json')}")
+
+
+FALLBACK = {"morning": ["plan"], "evening": ["check", "founder-batch"], "weekly": ["weekly-report"]}
+
+
+def cmd_run(args, cfg, store):
+    if llm.available() and not args.no_llm:
+        return cmd_agent(args, cfg, store)
+    if args.mode == "ask":
+        sys.exit("error: ask needs Claude")
+    print(f"Claude not configured: running the fixed-rule {args.mode} steps.")
+    for name in FALLBACK[args.mode]:
+        COMMANDS[name](args, cfg, store)
 
 
 def cmd_demo(args, cfg, store):
@@ -119,12 +153,16 @@ COMMANDS = {
     "founder-batch": cmd_founder_batch,
     "weekly-report": cmd_weekly_report,
     "demo": cmd_demo,
+    "agent": cmd_agent,
+    "run": cmd_run,
 }
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="bde_prospecting", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=COMMANDS)
+    parser.add_argument("mode", nargs="?", choices=["morning", "evening", "weekly", "ask"], help="for agent and run")
+    parser.add_argument("--question", help="for agent ask")
     parser.add_argument("--store", help="csv:<dir> or sheets:<spreadsheet id> (not needed for demo)")
     parser.add_argument("--date", type=date.fromisoformat, default=date.today(), help="run as if today were this date (YYYY-MM-DD)")
     parser.add_argument("--send", action="store_true", help="deliver messages on each person's channel, not just the outbox")
@@ -145,7 +183,11 @@ def main(argv=None):
         sys.exit(f"error: {e}")
     if args.command != "demo" and not args.store:
         sys.exit("error: --store is required")
+    if args.command in ("agent", "run") and not args.mode:
+        sys.exit(f"error: {args.command} needs a mode: morning, evening, weekly or ask")
     tracing.setup()
+    if args.store and args.store.startswith("csv:") and args.command != "setup" and not Path(args.store[4:]).is_dir():
+        sys.exit(f"error: {args.store[4:]} doesn't exist; create it with `setup --store {args.store}`")
     store = open_store(args.store) if args.store else None
     with tracing.span(args.command, date=args.date.isoformat()):
         COMMANDS[args.command](args, cfg, store)

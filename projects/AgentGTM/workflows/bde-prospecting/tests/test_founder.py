@@ -34,3 +34,10 @@ def test_respects_daily_limit(cfg, make_row):
     pb = cfg.playbooks["daxa"]
     rows = [make_row(check_status=sheet.VALID, status=sheet.NEW, linkedin_url=f"https://www.linkedin.com/in/p{i}") for i in range(pb.daily_invites + 5)]
     assert len(founder.pick_and_draft(cfg, pb, rows, use_llm=False)) == pb.daily_invites
+
+
+def test_person_added_to_do_not_contact_after_check_is_not_queued(cfg, make_row):
+    pb = cfg.playbooks["daxa"]
+    rows = [make_row(check_status=sheet.VALID, status=sheet.NEW)]
+    dnc = [{"linkedin_url": rows[0]["linkedin_url"], "company_domain": "", "company": "", "reason": "opted out", "added_by": "", "date": ""}]
+    assert founder.pick_and_draft(cfg, pb, rows, use_llm=False, dnc_rows=dnc) == []

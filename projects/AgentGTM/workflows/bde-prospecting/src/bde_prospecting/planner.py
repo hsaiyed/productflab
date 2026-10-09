@@ -66,48 +66,63 @@ def _stats(rows, tasks, today):
     return recent_valid, sent, accepted, recent_tasks
 
 
+def score_options(cfg, bde, rows, tasks, today, taken=()):
+    """Every allowed (startup, persona, territory) for one BDE, with its weight and why."""
+    recent_valid, sent, accepted, recent_tasks = _stats(rows, tasks, today)
+    options = []
+    for sid in bde.startups:
+        pb = cfg.playbooks[sid]
+        for persona in pb.personas.values():
+            n_sent, n_acc = sent[(sid, persona.id)], accepted[(sid, persona.id)]
+            if n_sent >= MIN_INVITES_FOR_PERFORMANCE:
+                performance = min(max(((n_acc + 1) / (n_sent + 2)) / BASELINE_ACCEPT_RATE, 0.5), 2.0)
+            else:
+                performance = 1.0
+            for tid, tweight in pb.territory_weights.items():
+                key = (sid, persona.id, tid)
+                if tweight <= 0 or key in taken:
+                    continue
+                coverage = 1 / (1 + recent_valid[key] / 50)
+                freshness = 0.5 ** recent_tasks[key]
+                options.append({
+                    "startup": sid, "persona": persona.id, "territory": tid,
+                    "weight": round(persona.priority * tweight * coverage * performance * freshness, 3),
+                    "persona_priority": persona.priority, "territory_weight": tweight,
+                    "valid_rows_last_14_days": recent_valid[key], "times_assigned_last_3_days": recent_tasks[key],
+                    "persona_invites_sent": n_sent, "persona_invites_accepted": n_acc,
+                })
+    # Highest weight first; ties go to the higher-priority persona, then alphabetical order.
+    options.sort(key=lambda o: (-o["weight"], -o["persona_priority"], o["startup"], o["persona"], o["territory"]))
+    return options
+
+
+def make_task(bde, today, startup, persona, territory, target, weight=0.0):
+    return Task(
+        date=today.isoformat(),
+        task_id=f"T-{today.isoformat()}-{bde.id}",
+        bde_id=bde.id,
+        startup=startup,
+        persona=persona,
+        territory=territory,
+        target=target,
+        mode="sales_navigator" if bde.linkedin_plan == "sales_navigator" else "google_xray",
+        weight=weight,
+    )
+
+
 def plan_day(cfg, rows, tasks, today=None):
     today = today or date.today()
     if any(t["date"] == today.isoformat() for t in tasks):
         return []  # already planned today
-    recent_valid, sent, accepted, recent_tasks = _stats(rows, tasks, today)
     taken = set()
     plan = []
     for bde in sorted(cfg.bdes.values(), key=lambda b: b.id):
-        options = []
-        for sid in bde.startups:
-            pb = cfg.playbooks[sid]
-            for persona in pb.personas.values():
-                n_sent = sent[(sid, persona.id)]
-                if n_sent >= MIN_INVITES_FOR_PERFORMANCE:
-                    rate = (accepted[(sid, persona.id)] + 1) / (n_sent + 2)
-                    performance = min(max(rate / BASELINE_ACCEPT_RATE, 0.5), 2.0)
-                else:
-                    performance = 1.0
-                for tid, tweight in pb.territory_weights.items():
-                    key = (sid, persona.id, tid)
-                    if tweight <= 0 or key in taken:
-                        continue
-                    coverage = 1 / (1 + recent_valid[key] / 50)
-                    freshness = 0.5 ** recent_tasks[key]
-                    weight = persona.priority * tweight * coverage * performance * freshness
-                    options.append((round(weight, 6), persona.priority, sid, persona.id, tid))
+        options = score_options(cfg, bde, rows, tasks, today, taken)
         if not options:
             continue
-        # Highest weight wins; ties go to the higher-priority persona, then alphabetical order.
-        weight, _, sid, pid, tid = min(options, key=lambda o: (-o[0], -o[1], o[2], o[3], o[4]))
-        taken.add((sid, pid, tid))
-        plan.append(Task(
-            date=today.isoformat(),
-            task_id=f"T-{today.isoformat()}-{bde.id}",
-            bde_id=bde.id,
-            startup=sid,
-            persona=pid,
-            territory=tid,
-            target=bde.daily_target,
-            mode="sales_navigator" if bde.linkedin_plan == "sales_navigator" else "google_xray",
-            weight=weight,
-        ))
+        best = options[0]
+        taken.add((best["startup"], best["persona"], best["territory"]))
+        plan.append(make_task(bde, today, best["startup"], best["persona"], best["territory"], bde.daily_target, best["weight"]))
     return plan
 
 

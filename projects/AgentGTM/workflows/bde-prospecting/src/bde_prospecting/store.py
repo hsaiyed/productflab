@@ -26,8 +26,8 @@ def _with_columns(record, columns):
 
 
 class CsvStore:
-    FILES = {sheet.PROSPECTS: "prospects.csv", sheet.TASKS: "tasks.csv", sheet.DO_NOT_CONTACT: "do_not_contact.csv"}
-    COLUMNS = {sheet.PROSPECTS: sheet.PROSPECT_COLUMNS, sheet.TASKS: sheet.TASK_COLUMNS, sheet.DO_NOT_CONTACT: sheet.DNC_COLUMNS}
+    FILES = {sheet.PROSPECTS: "prospects.csv", sheet.TASKS: "tasks.csv", sheet.DO_NOT_CONTACT: "do_not_contact.csv", sheet.AGENT_LOG: "agent_log.csv"}
+    COLUMNS = {sheet.PROSPECTS: sheet.PROSPECT_COLUMNS, sheet.TASKS: sheet.TASK_COLUMNS, sheet.DO_NOT_CONTACT: sheet.DNC_COLUMNS, sheet.AGENT_LOG: sheet.AGENT_LOG_COLUMNS}
 
     def __init__(self, directory):
         self.dir = Path(directory)
@@ -70,6 +70,12 @@ class CsvStore:
 
     def read_do_not_contact(self):
         return self._read(sheet.DO_NOT_CONTACT)
+
+    def read_agent_log(self):
+        return self._read(sheet.AGENT_LOG)
+
+    def append_agent_log(self, entry):
+        self._write(sheet.AGENT_LOG, self._read(sheet.AGENT_LOG) + [entry])
 
 
 class SheetsStore:
@@ -129,3 +135,9 @@ class SheetsStore:
 
     def read_do_not_contact(self):
         return self._records(sheet.DO_NOT_CONTACT, sheet.DNC_COLUMNS)
+
+    def read_agent_log(self):
+        return self._records(sheet.AGENT_LOG, sheet.AGENT_LOG_COLUMNS)
+
+    def append_agent_log(self, entry):
+        self._ws(sheet.AGENT_LOG).append_rows([[str(entry.get(c, "")) for c in sheet.AGENT_LOG_COLUMNS]], value_input_option="RAW")

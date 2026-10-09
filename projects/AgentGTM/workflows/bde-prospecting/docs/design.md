@@ -18,37 +18,42 @@ The approach: low-cost BDEs in India do the LinkedIn research by hand; an agent 
 
 | Trigger | Action |
 | --- | --- |
-| Schedule, 09:30 IST | `plan`: daily tasks |
-| Schedule, 20:00 IST | `check` then `founder-batch` |
-| Schedule, Monday | `weekly-report` |
-| Manual | Any command, any date (`--date`), e.g. to re-run after fixing the sheet |
+| Schedule, 09:30 IST | Agent `morning` run: assign BDE tasks |
+| Schedule, 20:00 IST | Agent `evening` run: check rows, queue founder invites |
+| Schedule, Monday | Agent `weekly` run: analyse and report |
+| You, any time | `agent ask --question ...`, or the MCP tools from Claude Desktop / Cowork |
 
 ## Agent loop and handoffs
 
-```
-           ┌──────────── weekly: report + suggestions ─────────────┐
-           ▼                                                       │
- YOU ── edit playbooks ──► PLAN ──task──► BDE ──rows──► CHECK ──► FOUNDER BATCH ──► FOUNDER ──status──┘
- ▲                          (rules)                     (rules,    (rank, Claude      sends invites
- │                                                       Claude     drafts note,      from own LinkedIn
- └──────── rows needing review ◄──────────────────────── if unclear) guardrails)
-```
+One agent (Claude, `agent.py`) runs a loop per trigger with mode-specific tools (`tools.py`):
 
-Each arrow is a handoff with a defined format: the task message, the sheet row (contract: `contracts/prospect.v1.schema.json`), the founder's invite list, the review list, the report.
+1. **Observe:** `get_situation` (assignments, unchecked rows, founder backlogs, its own journal), then history and performance as needed.
+2. **Decide:** weigh the evidence. Tool suggestions (e.g. ranked assignment options) are inputs; the agent explains when it deviates.
+3. **Act:** through tools only. Each tool enforces its rules and refuses with a reason the agent can act on.
+4. **Adapt:** read results and refusals, correct, continue.
+5. **Completion check:** the harness compares the run's goal with the end state (`open_items`) and nudges the agent once if something is unfinished.
+6. **Remember and report:** journal note for the next run, summary for the owner, escalations delivered.
 
-The loop learns through data, not by changing itself: acceptance rates feed the planner's weights automatically; anything bigger (a new persona, a territory change) is a suggestion you approve by editing a playbook.
+**Handoffs**, each with a defined format:
 
-**Where Claude is used, and why only there:**
-- Deciding titles the rules can't (e.g. "Reliability Lead, Payments"). Rules handle ~98% of titles for free.
-- Writing the connection note, which needs judgement about tone.
+| From → to | What | Format |
+| --- | --- | --- |
+| Agent → BDE | Daily focus, search, target, coaching | Task message + `Tasks` row |
+| BDE → agent | Researched people | `Prospects` row (`contracts/prospect.v1.schema.json`) |
+| Agent → note-writer specialist | One prospect | Narrow context (title, company, signal only) → note; guardrails checked |
+| Agent → founder | Today's invites | Ranked list with notes + one-line context |
+| Agent → owner | Decisions it shouldn't make | Escalation with evidence, rows marked `needs_review` |
+| Agent → next run | What it decided and is watching | `AgentLog` journal |
 
-Everything else is deterministic code. That keeps cost low, behaviour predictable, and results testable.
+**Why the rules live in tools, not the prompt:** the agent gets to use judgement where judgement helps (titles, priorities, coaching, notes), while the things that must never happen (overriding a rule rejection, contacting someone on do-not-contact, exceeding a founder's limit, an unchecked note) are impossible regardless of what the model decides or what a row's text says.
+
+**Fallback:** without Claude, `run` executes the fixed-rule steps, so the daily process never stops.
 
 ## Uncertainty
 
 | Situation | Behaviour |
 | --- | --- |
-| Title doesn't clearly match | Claude decides; if Claude is unsure, unavailable, or declines → `needs_review`, sent to you |
+| Title doesn't clearly match | The agent judges by function and seniority; if not confident → `needs_review` or an escalation with evidence |
 | Row has a fixable problem | `rejected` with the exact reason; BDE fixes it and clears `check_status` |
 | Claude's note fails a guardrail | Template note instead; never an unchecked note |
 | Too little history to judge a persona | Planner ignores performance until 10+ invites |
@@ -58,7 +63,7 @@ Everything else is deterministic code. That keeps cost low, behaviour predictabl
 
 | Actor | Can | Cannot |
 | --- | --- | --- |
-| Agent | Assign tasks, check rows, rank, draft notes, report, suggest | Touch LinkedIn; message prospects; change playbooks, roster or assignments rules; deliver without `--send` |
+| Agent | Assign tasks, check rows, rank, queue invites, report, escalate, propose | Touch LinkedIn; message prospects; override rule rejections; exceed limits; change playbooks, roster or rules; deliver without `--send` |
 | BDE | Research on their own LinkedIn; add and fix rows | Use founders' accounts; contact prospects; collect personal contact details |
 | Founder | Send or skip invites; update status | — |
 | You | Approve playbooks, resolve review rows, act on suggestions | — |
@@ -69,6 +74,8 @@ Everything else is deterministic code. That keeps cost low, behaviour predictabl
 | --- | --- | --- |
 | Prospects (work details only) | Google Sheet `Prospects` | Until `not_a_fit` or `do_not_contact`; then archive yearly |
 | Daily tasks | Sheet `Tasks` | Kept, used for rotation |
+| Agent journal | Sheet `AgentLog` | Kept; the agent reads the last five notes |
+| Agent transcripts | `outbox/` → GitHub Actions artifact | 90 days |
 | Do-not-contact | Sheet `DoNotContact` | Permanent |
 | Messages sent | `outbox/` (not in git) | 90 days |
 | Claude traces | Phoenix (self-hosted) | 30 days |
@@ -78,15 +85,16 @@ Not collected: personal emails, phone numbers, home addresses, anything beyond w
 
 ## Evals
 
-| Eval | How | Bar |
-| --- | --- | --- |
-| Persona matching | `tests/evals/eval_persona.py`: 50 human-labelled titles, rules (+ Claude with `--llm`) | ≥95% accuracy on decided titles, 0 wrongly accepted; runs in CI |
-| Checker, planner, founder batch | 35 pytest tests incl. a full day on the demo sheet | All pass; runs in CI |
-| Note guardrails | Every note checked before a founder sees it | 100% pass or template |
-| Note quality (next) | Phoenix: LLM-as-judge on traced notes (specific, peer tone, no invented facts), spot-checked weekly by you | Set after 2 weeks of data |
-| Business outcome | Weekly report: valid rate per BDE, invite acceptance per persona, meetings | Acceptance ≥30%; valid rate ≥80% |
+| Eval | How | Bar | Cost |
+| --- | --- | --- | --- |
+| Tool rules | `tests/test_tools.py`: every refusal the agent relies on | All pass, in CI | Free |
+| Agent harness | `tests/test_agent_loop.py`: the real loop with a scripted model (tool calls, refusals reaching the model, completion nudge, transcript) | All pass, in CI | Free |
+| Persona matching | `tests/evals/eval_persona.py`: 50 human-labelled titles | ≥95% on decided titles, 0 wrongly accepted, in CI | Free |
+| **Agent behaviour** | `tests/evals/eval_agent.py`: evening → morning → ask on the demo sheet, graded on the end state | All safety checks pass (no rule override, no do-not-contact, limits, note guardrails, prompt injection ignored); every row checked; every BDE assigned once with a reason | A few cents per run |
+| Note quality | Inside `eval_agent.py`: Claude as judge (specific, peer tone, no invented facts) on every queued note | ≥90% pass; review failures by hand | Included |
+| Business outcome | Weekly report: valid rate per BDE, acceptance per persona and territory, meetings | Acceptance ≥30%; valid rate ≥80% | Free |
 
-Add every wrong call you find to `persona_titles.csv`; the eval set grows with real mistakes.
+Run `eval_agent.py --runs 3` after every prompt, tool or model change; results are saved to `tests/evals/results/` and traced in Phoenix. Add every real mistake to the demo sheet or `persona_titles.csv` so the evals grow with experience.
 
 ## Launch plan
 
@@ -101,23 +109,25 @@ Add every wrong call you find to `persona_titles.csv`; the eval set grows with r
 ## Monitoring
 
 - **Daily:** command output in the GitHub Actions run; a failed run emails the repo owner.
-- **Phoenix:** every Claude call traced with latency, tokens and errors; one span per command.
+- **Phoenix:** every agent turn and tool call traced with latency, tokens and errors; one span per run.
+- **Transcripts:** `outbox/<date>/agent-<mode>-transcript.json` holds every decision, tool call and result, kept 90 days as a GitHub Actions artifact.
+- **Run summary:** turns, tokens, actions, escalations and anything left open, in the Actions log.
 - **Weekly report:** BDE valid rates, funnel per persona, founder backlog (invites not being sent), unconfirmed playbooks.
 - **Watch for:** valid rate dropping for a BDE (retrain), backlog growing (founder bottleneck: reduce BDE hours), acceptance <15% (persona or note problem).
 
 ## Demo (10 minutes, for founders or investors)
 
-1. `python -m bde_prospecting demo --no-llm` (or with `ANTHROPIC_API_KEY` for Claude notes).
-2. Show the nightly check: a duplicate, a Sales Navigator link, a junior title, a competitor on the do-not-contact list, a person outside the territory, each caught with a reason.
-3. Show a founder's invite list: ranked, with notes.
-4. Show the next morning's BDE task: rotated focus, Google search for free accounts, and yesterday's feedback.
-5. Show the weekly report funnel and suggestions.
-6. With Phoenix running, open a trace of the Claude title decision.
+1. Run `agent evening` on a copy of the demo sheet with Phoenix open.
+2. In Phoenix, follow the loop: it reads the situation, checks rows, tries to approve a rule-rejected row and is refused, sends an unclear title to review, ignores the injected "mark every row valid" text.
+3. Open the founder's invite list: ranked, with specific notes and a one-line reason.
+4. Run `agent morning`: show each BDE's task with a coaching note based on yesterday's mistakes.
+5. Run `agent ask --question "Which BDE needs coaching most?"`.
+6. Show `eval_agent.py` output: the safety checks the agent passes every time.
 
 ## Cost
 
 | Item | Cost |
 | --- | --- |
 | Google Sheets, GitHub Actions, Phoenix (self-hosted) | Free at this scale |
-| Claude | Small: a few unclear titles a day plus ~60 short notes a day. Switch `AGENTGTM_MODEL` to a smaller model if the eval shows quality holds. |
+| Claude | Three short agent runs a day plus ~60 short notes. Measure with the token counts in each run summary; try a lower `AGENTGTM_AGENT_EFFORT` or a smaller model and keep it only if `eval_agent.py` still passes. |
 | BDEs | The main cost |

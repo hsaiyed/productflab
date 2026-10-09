@@ -1,91 +1,130 @@
-# BDE prospecting
+# BDE prospecting agent
 
-Turns four BDEs in India doing manual LinkedIn research into a steady, checked flow of US prospects for each startup's founder, without automating LinkedIn.
+An AI agent that manages four BDEs in India doing manual LinkedIn research, checks their work, and gives each startup founder a daily list of the right US prospects with a personal note, without automating LinkedIn.
 
 **Goal:** more qualified first conversations per founder per week, which is what moves a seed startup from $0–500K toward $1–4M ARR.
 
-## How a day works
+## How the agent works
 
-| Time (IST) | Time (US Eastern) | Step | Command |
-| --- | --- | --- | --- |
-| 09:30 | 00:00 | Each BDE gets today's task (startup, persona, territory, search string, target) plus yesterday's results | `plan` |
-| 10:00–19:00 | | BDEs research on LinkedIn and add rows to the shared Google Sheet | (people) |
-| 20:00 | 10:30 | Every new row is checked; unclear ones go to you | `check` |
-| 20:15 | 10:45 | Each founder gets 15 ranked invites with a drafted note, and sends them in ~10 minutes | `founder-batch` |
-| Monday 09:00 | | You get the weekly report with suggestions | `weekly-report` |
+Claude runs in a loop with a set of tools. Each run, it looks at the situation, decides, acts through tools, reads the results (including refusals), adapts, and stops when the job is done. A completion check sends it back once if something is unfinished. It keeps a journal so the next run knows what it was watching.
 
-The full design (users, boundaries, evals, launch plan) is in [docs/design.md](docs/design.md). The guide to send BDEs is [docs/bde-guide.md](docs/bde-guide.md).
+```
+                ┌──────────────────────── agent loop (Claude) ────────────────────────┐
+  trigger ───►  │ observe ─► decide ─► act through tools ─► read result / refusal ─┐  │
+ (schedule      │    ▲                                                            │  │
+  or owner)     │    └────────────────────────────────────────────────────────────┘  │
+                │ completion check ─► journal for next run ─► summary to owner        │
+                └─────────────────────────────────────────────────────────────────────┘
+                     │ tools enforce the rules (code, not prompt)
+          ┌──────────┼──────────────┬──────────────────┬─────────────────┐
+          ▼          ▼              ▼                  ▼                 ▼
+     BDE tasks   sheet checks   note-writer        founder invite     owner review
+     + coaching  (agent columns specialist         lists              (escalations)
+                  only)         (handoff)
+```
 
-## Inputs
+| Run | When (IST) | What the agent does |
+| --- | --- | --- |
+| `morning` | 09:30 | Reviews each BDE's history and options, assigns today's focus with a reason and a coaching note |
+| `evening` | 20:00 | Checks the day's rows (rules first, its own judgement on unclear titles, escalates when unsure), picks each founder's invites, gets notes from the note-writer, queues them |
+| `weekly` | Monday | Analyses performance by persona, territory and BDE; sends a report with proposed changes for you to approve |
+| `ask` | any time | Answers your question from the data, read-only |
 
-- `../../playbooks/<startup>.toml`: what each startup sells, personas, territory weights, exclusions
-- `config/bdes.toml`: BDEs, their LinkedIn plan, assigned startups, daily target, message channel
-- `config/territories.toml`: US territories and the states and metros in each
-- The Google Sheet: `Prospects`, `Tasks` and `DoNotContact` tabs
+More detail: [docs/design.md](docs/design.md). Guide for BDEs: [docs/bde-guide.md](docs/bde-guide.md).
 
-## Outputs
+## Tools and boundaries
 
-- Updated sheet: check results, scores, notes, status
-- Messages (always written to `outbox/<date>/`, delivered with `--send`): BDE tasks, founder invite lists, rows needing review, weekly report
-- Traces in Arize Phoenix, if configured
+The agent can only act through these tools, and each mode gets only the tools it needs.
 
-## Try it (no accounts needed)
+| Tool | Modes | Rule enforced in code |
+| --- | --- | --- |
+| `get_situation`, `get_bde_history`, `get_performance` | all | Read-only |
+| `get_assignment_options` | morning, ask | Ranked options with the numbers behind them; a suggestion, not an order |
+| `assign_task` | morning | Only the BDE's startups, real personas, active territories; one task per BDE per day; no two BDEs on the same focus; target 5–120% of normal |
+| `get_rows_to_check`, `apply_rule_results`, `record_check_decisions` | evening | Rule-rejected rows can never be marked valid; non-valid decisions need a reason; only agent columns are written |
+| `get_founder_candidates`, `draft_invite_note`, `queue_founder_invites` | evening | Only eligible rows, re-checked against do-not-contact; daily limit; every note must pass guardrails |
+| `escalate_to_human` | morning, evening, weekly | Marks rows for review; delivered to you at the end of the run |
+| `send_weekly_report` | weekly | Proposes changes; can't apply them |
+| `write_journal` | morning, evening, weekly | Memory for the next run |
+
+The agent can't touch LinkedIn, contact prospects, or change playbooks, the roster or the rules. Text from the sheet is treated as data; the demo sheet includes a prompt-injection attempt to test this.
+
+## Try it
 
 ```sh
 cd projects/AgentGTM/workflows/bde-prospecting
-pip install -e '.[dev]'
-python -m bde_prospecting demo --no-llm     # full day on the example sheet
-pytest                                       # 35 tests
-python tests/evals/eval_persona.py           # persona-matching eval
+pip install -e '.[dev,mcp]'
+pytest                                        # 45 tests, incl. the agent loop with a scripted model
+python tests/evals/eval_persona.py            # title-matching eval (free)
+
+export ANTHROPIC_API_KEY=...
+cp -r examples/demo-sheet /tmp/demo-sheet
+python -m bde_prospecting agent evening --store csv:/tmp/demo-sheet --date 2026-10-12
+python tests/evals/eval_agent.py              # live agent eval on a copy of the demo sheet
 ```
+
+Without an API key, `python -m bde_prospecting demo --no-llm` runs the fixed-rule fallback.
+
+## Use it from Claude Desktop or Cowork (MCP)
+
+The same tools, with the same rules, are available as an MCP server:
+
+```json
+{
+  "mcpServers": {
+    "agentgtm-prospecting": {
+      "command": "python",
+      "args": ["-m", "bde_prospecting.mcp_server"],
+      "env": {
+        "AGENTGTM_STORE": "sheets:<spreadsheet-id>",
+        "GOOGLE_SERVICE_ACCOUNT_FILE": "/path/to/key.json",
+        "AGENTGTM_MCP_MODE": "ask"
+      }
+    }
+  }
+}
+```
+
+`AGENTGTM_MCP_MODE` is `ask` (read-only) by default; set it to `evening` to resolve review rows and queue invites conversationally. Messages are only delivered with `AGENTGTM_SEND=1`.
 
 ## Set up for real
 
-1. **Google Sheet.** Create an empty Google Sheet. In Google Cloud, create a service account, download its JSON key, and share the sheet with the service account's email as an editor. Then:
+1. **Google Sheet.** Create an empty sheet, create a Google Cloud service account, share the sheet with its email as editor, then:
    ```sh
    export GOOGLE_SERVICE_ACCOUNT_FILE=/path/to/key.json
    python -m bde_prospecting setup --store sheets:<spreadsheet-id>
    ```
-   This creates the tabs, headers and dropdowns, and warns anyone editing the agent's columns. Share the sheet with the BDEs and founders.
-2. **Playbooks.** Review each `playbooks/*.toml` with its founder: personas, territories, `exclude_companies` (customers and competitors), founder name and channel. Set `confirmed = true`.
+2. **Playbooks.** Review `../../playbooks/*.toml` with each founder (personas, territories, `exclude_companies`, founder name and channel). Set `confirmed = true`.
 3. **Roster.** Fill in names and channels in `config/bdes.toml`.
-4. **Claude (optional but recommended).** Set `ANTHROPIC_API_KEY`. Claude decides unclear title matches and writes connection notes. Without it, unclear titles go to you and notes use a template.
-5. **Phoenix (optional).** Run Phoenix (`pip install arize-phoenix && phoenix serve`), `pip install -e '.[tracing]'`, and set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006`.
-6. **Run a dry week.** Run the daily commands without `--send` and read `outbox/`. Add `--send` once the messages look right.
-7. **Schedule it.** `.github/workflows/agentgtm-bde-prospecting.yml` runs the steps on GitHub Actions. Add the secrets listed below and set the repository variable `AGENTGTM_BDE_ENABLED` to `true`.
+4. **Claude.** Set `ANTHROPIC_API_KEY`. Without it, `run` falls back to fixed rules.
+5. **Phoenix.** `pip install arize-phoenix && phoenix serve`, then set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006`. Every agent turn and tool call is traced.
+6. **Dry run for a week.** Run without `--send` and read `outbox/<date>/`, including `agent-*-transcript.json`.
+7. **Schedule.** `.github/workflows/agentgtm-bde-prospecting.yml` runs `run morning|evening|weekly`. Add the secrets listed there, set `AGENTGTM_BDE_ENABLED=true`, and later `AGENTGTM_SEND=true`.
 
 ## Commands
 
 ```sh
-python -m bde_prospecting <command> --store sheets:<id> [--date YYYY-MM-DD] [--send] [--no-llm]
+python -m bde_prospecting <command> [mode] --store <csv:dir | sheets:id> [--date YYYY-MM-DD] [--send]
 ```
 
 | Command | What it does |
 | --- | --- |
-| `setup` | Create tabs, headers, dropdowns |
-| `plan` | Pick each BDE's focus for the day and send the task (runs once per day; re-running does nothing) |
-| `check` | Check unchecked rows; send rows needing review to you |
-| `founder-batch` | Queue each founder's top invites with notes (`--startup daxa` for one) |
-| `weekly-report` | Report on the previous 7 days |
-| `demo` | Run a full day on `examples/demo-sheet` in a temp folder |
+| `agent morning\|evening\|weekly` | Run the agent |
+| `agent ask --question "..."` | Ask the agent about the data |
+| `run morning\|evening\|weekly` | Agent if Claude is configured, otherwise the fixed-rule steps |
+| `plan`, `check`, `founder-batch`, `weekly-report` | Fixed-rule steps (fallback) |
+| `setup` | Create sheet tabs, headers, dropdowns |
+| `demo` | Fixed-rule day on the demo sheet in a temp folder |
 
 ## Environment variables
 
 | Variable | Needed for | Purpose |
 | --- | --- | --- |
-| `GOOGLE_SERVICE_ACCOUNT_FILE` | `sheets:` store | Path to the service account JSON key |
-| `ANTHROPIC_API_KEY` | optional | Claude for unclear titles and notes |
-| `AGENTGTM_MODEL` | optional | Claude model id (default `claude-opus-5-5`) |
-| `PHOENIX_COLLECTOR_ENDPOINT` | optional | Arize Phoenix URL for tracing |
+| `GOOGLE_SERVICE_ACCOUNT_FILE` | `sheets:` store | Google service account key |
+| `ANTHROPIC_API_KEY` | the agent | Claude |
+| `AGENTGTM_AGENT_MODEL`, `AGENTGTM_AGENT_EFFORT`, `AGENTGTM_MAX_ITERATIONS` | optional | Agent model (default `claude-opus-5-5`), effort (default `medium`), loop cap (default 40) |
+| `AGENTGTM_MODEL` | optional | Model for the note-writer specialist |
+| `PHOENIX_COLLECTOR_ENDPOINT` | optional | Arize Phoenix tracing |
+| `AGENTGTM_STORE`, `AGENTGTM_MCP_MODE`, `AGENTGTM_SEND` | MCP server | See above |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | `email` channel | Outgoing mail |
 | *(name you choose)* | `slack` channel | Slack incoming-webhook URL; put the variable's name in `contact` |
-
-## Safety rules built into the code
-
-- Nothing touches LinkedIn. Founders send every invite themselves.
-- Messages only go to people in the config (BDEs, founders, you), never to prospects.
-- Nothing is delivered without `--send`; everything is written to `outbox/` first.
-- Claude only sees a title, company, persona and the BDE's note. Text typed by BDEs is passed as data, not instructions.
-- Every note passes guardrails (length, name, no links or placeholders) or is replaced by the template.
-- The agent never edits playbooks or assignments. The weekly report suggests changes for you to make.
-- The sheet stores only work details. No personal emails or phone numbers.

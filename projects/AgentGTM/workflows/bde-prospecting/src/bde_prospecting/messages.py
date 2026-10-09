@@ -10,7 +10,7 @@ def _or_query(terms):
     return " OR ".join(f'"{t}"' for t in terms)
 
 
-def task_message(task, cfg, feedback=None, sheet_url=""):
+def task_message(task, cfg, feedback=None, sheet_url="", coach_note=""):
     bde = cfg.bdes[task.bde_id]
     pb = cfg.playbooks[task.startup]
     persona = pb.personas[task.persona]
@@ -49,6 +49,10 @@ def task_message(task, cfg, feedback=None, sheet_url=""):
         "**Bonus:** note anything recent and relevant in `signal_notes` (a post, a new role, hiring, a launch).",
         "**Skip:** anyone in the DoNotContact tab and any company you're unsure about.",
     ]
+    if pb.exclude_companies:
+        lines.append(f"**Never add people from:** {', '.join(pb.exclude_companies)} (customers, competitors or partners).")
+    if coach_note:
+        lines += ["", f"**Note for you today:** {coach_note}"]
     if feedback:
         lines += ["", "**Yesterday's results:** " + _feedback_line(feedback)]
     if sheet_url:

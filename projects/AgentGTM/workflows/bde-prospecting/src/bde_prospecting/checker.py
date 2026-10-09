@@ -86,6 +86,21 @@ def score_row(row, persona, playbook):
     return int(min(score, 100))
 
 
+def do_not_contact_matcher(dnc_rows):
+    """Return a function telling whether a row matches the do-not-contact list."""
+    urls = {normalize_linkedin(r["linkedin_url"]) for r in dnc_rows if r["linkedin_url"]} - {None}
+    domains = {normalize_domain(r["company_domain"]) for r in dnc_rows if r["company_domain"]}
+    companies = {r["company"].strip().lower() for r in dnc_rows if r["company"]}
+
+    def blocked(row):
+        url = normalize_linkedin(row["linkedin_url"]) if row["linkedin_url"].strip() else None
+        domain = normalize_domain(row["company_domain"]) if row["company_domain"] else ""
+        company = row["company"].strip().lower()
+        return bool((url and url in urls) or (domain and domain in domains) or (company and company in companies))
+
+    return blocked
+
+
 class Checker:
     def __init__(self, cfg, use_llm=None):
         self.cfg = cfg
@@ -95,9 +110,7 @@ class Checker:
     def check(self, rows, dnc_rows, today=None):
         """Return {row number: agent column updates} for unchecked rows."""
         today = today or date.today().isoformat()
-        dnc_urls = {normalize_linkedin(r["linkedin_url"]) for r in dnc_rows if r["linkedin_url"]} - {None}
-        dnc_domains = {normalize_domain(r["company_domain"]) for r in dnc_rows if r["company_domain"]}
-        dnc_companies = {r["company"].strip().lower() for r in dnc_rows if r["company"]}
+        blocked = do_not_contact_matcher(dnc_rows)
 
         # Earlier rows that weren't rejected claim their URL and name+company first.
         seen_urls, seen_people = {}, {}
@@ -105,7 +118,7 @@ class Checker:
         for row in rows:
             fresh = row["check_status"] == sheet.PENDING
             if fresh:
-                status, reasons, extra = self._check_row(row, seen_urls, seen_people, dnc_urls, dnc_domains, dnc_companies)
+                status, reasons, extra = self._check_row(row, seen_urls, seen_people, blocked)
                 updates[row["_row"]] = {"check_status": status, "check_reasons": "; ".join(reasons), **extra}
                 if status == sheet.VALID:
                     updates[row["_row"]].update(status=sheet.NEW, status_updated=today)
@@ -123,7 +136,7 @@ class Checker:
         name = f"{row['first_name']} {row['last_name']}".strip().lower()
         return name, row["company"].strip().lower()
 
-    def _check_row(self, row, seen_urls, seen_people, dnc_urls, dnc_domains, dnc_companies):
+    def _check_row(self, row, seen_urls, seen_people, blocked):
         errors, review = [], []
         missing = [c for c in sheet.REQUIRED if not row[c].strip()]
         if missing:
@@ -142,7 +155,7 @@ class Checker:
 
         domain = normalize_domain(row["company_domain"]) if row["company_domain"] else ""
         company = row["company"].strip().lower()
-        if url in dnc_urls or (domain and domain in dnc_domains) or (company and company in dnc_companies):
+        if blocked(row):
             errors.append("on the do-not-contact list")
 
         if row["bde_id"] and row["bde_id"] not in self.cfg.bdes:
